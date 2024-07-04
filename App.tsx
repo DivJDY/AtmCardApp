@@ -1,118 +1,96 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+/* eslint-disable react-native/no-inline-styles */
+/* eslint-disable react/react-in-jsx-scope */
+import {useEffect, useRef, useState} from 'react';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import SwipeImageStack from './src/components/AtmCardStack';
 import {
+  Button,
+  FlatList,
+  Image,
   SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
   Text,
-  useColorScheme,
+  TouchableOpacity,
   View,
 } from 'react-native';
+import {styles} from './styles/globalStyle';
+import {card_data} from './db';
+import SubHeader from './src/components/SubHeader';
+import ShowModal from './src/components/ShowModal';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const App = () => {
+  const [images, setImages] = useState(card_data);
+  const [modalVisible, setModalVisible] = useState(false);
+  useEffect(() => {
+    setImages(card_data);
+  }, []);
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+  const isSwipingRef = useRef(false);
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const handleSwipeRight = (index: number) => {
+    if (!isSwipingRef.current) {
+      isSwipingRef.current = true;
+      setImages(currentImages => {
+        const newImages = [...currentImages];
+        const [removed] = newImages.splice(index, 1);
+        newImages.push(removed);
+        return newImages;
+      });
+      setTimeout(() => {
+        isSwipingRef.current = false;
+      }, 300);
+    }
   };
+  const Imagelist = [
+    require('./assets/subheader/fingerprint_black.png'),
+    require('./assets/subheader/flight_takeoff_black.png'),
+    require('./assets/subheader/water_drop_black.png'),
+    require('./assets/subheader/health_and_safety_black.png'),
+    require('./assets/subheader/history_edu_black.png'),
+    require('./assets/subheader/card_membership_black.png'),
+  ];
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+    <SafeAreaView style={{flex: 1, backgroundColor: '#000'}}>
+      <SubHeader />
+      <View style={{flex: 1, backgroundColor: '#252525'}}>
+        <View style={[styles.subheaderView, {margin: 20}]}>
+          {Imagelist.map((item, index) => (
+            <View key={index}>
+              <TouchableOpacity onPress={() => setModalVisible(true)}>
+                <Image source={item} style={styles.subheader_img} />
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
-      </ScrollView>
+        <GestureHandlerRootView>
+          <View style={styles.container}>
+            {images.map((imageUrl, index) => (
+              <SwipeImageStack
+                key={imageUrl.id}
+                imageUrl={imageUrl.image}
+                index={index}
+                totalCards={images.length}
+                onSwipeRight={handleSwipeRight}
+                isTopCard={index === 0}
+              />
+            ))}
+          </View>
+        </GestureHandlerRootView>
+        <TouchableOpacity
+          style={styles.fabView}
+          onPress={() => setModalVisible(true)}>
+          <Image
+            source={require('./assets/add_fab.png')}
+            style={{width: 72, height: 72}}
+          />
+        </TouchableOpacity>
+        <ShowModal
+          modalVisible={modalVisible}
+          setModalVisible={setModalVisible}
+        />
+      </View>
     </SafeAreaView>
   );
-}
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+};
 
 export default App;
